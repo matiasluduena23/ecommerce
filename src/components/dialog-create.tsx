@@ -17,16 +17,26 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { type Product, ProductSchema } from "@/lib/schemas";
+import { type NoIdProduct, NoIdProductSchema } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Textarea } from "./ui/textarea";
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/main";
+import { createProduct } from "@/lib/database";
 
 export function CreateProduct() {
 	const [open, setOpen] = useState(false);
-	const form = useForm<Product>({
-		resolver: zodResolver(ProductSchema),
+	const mutation = useMutation({
+		mutationFn: createProduct,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["products"] });
+		},
+	});
+
+	const form = useForm<NoIdProduct>({
+		resolver: zodResolver(NoIdProductSchema),
 		defaultValues: {
 			brand_name: "",
 			price: 0,
@@ -35,24 +45,12 @@ export function CreateProduct() {
 		},
 	});
 
-	function onSubmit(values: Product) {
-		fetch(`http://localhost:8081/ecommerce/v1/product`, {
-			method: "POST",
-			body: JSON.stringify(values),
-			headers: {
-				"Content-Type": "application/json",
-			},
-		})
-			.then((response) => {
-				if (!response.ok) {
-					throw new Error("Network response was not ok");
-				}
-				return response.json();
-			})
-			.then(() => setOpen(false))
-			.catch((error) => {
-				console.error("There was a problem with the fetch operation:", error);
-			});
+	async function onSubmit(values: NoIdProduct) {
+		// Making the POST request
+		mutation.mutate(values);
+
+		setOpen(false);
+		form.reset();
 	}
 
 	return (
@@ -130,7 +128,7 @@ export function CreateProduct() {
 							name="description"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Bio</FormLabel>
+									<FormLabel>Descripcion</FormLabel>
 									<FormControl>
 										<Textarea
 											placeholder="product description"

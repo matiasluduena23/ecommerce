@@ -8,28 +8,22 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { deleteProduct } from "@/lib/database";
+import { queryClient } from "@/main";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
 export function DeleteProduct({ id }: { id: number }) {
 	const [open, setOpen] = useState(false);
-
+	const mutation = useMutation({
+		mutationFn: deleteProduct,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["products"] });
+		},
+	});
 	const handleDelete = () => {
-		fetch(`http://localhost:8081/ecommerce/v1/product/${id}`, {
-			method: "DELETE",
-		})
-			.then((response) => {
-				if (!response.ok) {
-					throw new Error("Network response was not ok");
-				}
-				return response.json();
-			})
-			.then((data) => {
-				console.log("Product deleted:", data);
-				setOpen(false);
-			})
-			.catch((error) => {
-				console.error("There was a problem with the fetch operation:", error);
-			});
+		mutation.mutate(id);
+		setOpen(false);
 	};
 
 	return (
@@ -50,8 +44,13 @@ export function DeleteProduct({ id }: { id: number }) {
 					<Button variant={"secondary"} onClick={() => setOpen(false)}>
 						Cancel
 					</Button>
-					<Button variant={"destructive"} onClick={handleDelete}>
-						Delete
+					<Button
+						variant={"destructive"}
+						onClick={handleDelete}
+						disabled={mutation.isPending}
+						className={`${mutation.isPending ? "opacity-50" : ""}`}
+					>
+						{mutation.isPending ? "Deleting..." : "Delete"}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

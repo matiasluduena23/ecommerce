@@ -22,33 +22,31 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Textarea } from "./ui/textarea";
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/main";
+import { updateProduct } from "@/lib/database";
 
 export function UpdateProduct({ product }: { product: Product }) {
 	const [open, setOpen] = useState(false);
+
+	const mutation = useMutation({
+		mutationFn: updateProduct,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["products"] });
+		},
+	});
+
 	const form = useForm<Product>({
 		resolver: zodResolver(ProductSchema),
 		defaultValues: product,
 	});
 
 	function onSubmit(values: Product) {
-		// Uncomment the following lines to fetch data from the API
-		fetch(`http://localhost:8081/ecommerce/v1/product/${product.id}`, {
-			method: "PUT",
-			body: JSON.stringify(values),
-			headers: {
-				"Content-Type": "application/json",
-			},
-		})
-			.then((response) => {
-				if (!response.ok) {
-					throw new Error("Network response was not ok");
-				}
-				return response.json();
-			})
-			.then(() => setOpen(false))
-			.catch((error) => {
-				console.error("There was a problem with the fetch operation:", error);
-			});
+		// UPDATE PRODUCT
+		mutation.mutate(values);
+
+		setOpen(false);
+		form.reset();
 	}
 
 	return (
@@ -126,7 +124,7 @@ export function UpdateProduct({ product }: { product: Product }) {
 							name="description"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Bio</FormLabel>
+									<FormLabel>Description</FormLabel>
 									<FormControl>
 										<Textarea
 											placeholder="Tell us a little bit about yourself"
