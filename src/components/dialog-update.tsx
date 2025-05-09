@@ -20,23 +20,39 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { type Product, ProductSchema } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-
 import { Textarea } from "./ui/textarea";
+import { useState } from "react";
 
 export function UpdateProduct({ product }: { product: Product }) {
+	const [open, setOpen] = useState(false);
 	const form = useForm<Product>({
 		resolver: zodResolver(ProductSchema),
 		defaultValues: product,
 	});
 
 	function onSubmit(values: Product) {
-		// Do something with the form values.
-		// ✅ This will be type-safe and validated.
-		console.log(values);
+		// Uncomment the following lines to fetch data from the API
+		fetch(`http://localhost:8081/ecommerce/v1/product/${product.id}`, {
+			method: "PUT",
+			body: JSON.stringify(values),
+			headers: {
+				"Content-Type": "application/json",
+			},
+		})
+			.then((response) => {
+				if (!response.ok) {
+					throw new Error("Network response was not ok");
+				}
+				return response.json();
+			})
+			.then(() => setOpen(false))
+			.catch((error) => {
+				console.error("There was a problem with the fetch operation:", error);
+			});
 	}
 
 	return (
-		<Dialog>
+		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
 				<Button variant="secondary">Update</Button>
 			</DialogTrigger>
@@ -123,7 +139,7 @@ export function UpdateProduct({ product }: { product: Product }) {
 								</FormItem>
 							)}
 						/>
-						<Button type="submit">Submit</Button>
+						<Button type="submit">Update</Button>
 					</form>
 				</Form>
 			</DialogContent>

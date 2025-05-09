@@ -10,7 +10,8 @@ function App() {
 	const [products, setProducts] = useState<Product[]>(data);
 
 	useEffect(() => {
-		// fetch("./lib/products.json")
+		// Uncomment the following lines to fetch data from the API
+		// fetch("http://localhost:8081/ecommerce/v1/product")
 		// 	.then((response) => {
 		// 		if (!response.ok) {
 		// 			throw new Error("Network response was not ok");
